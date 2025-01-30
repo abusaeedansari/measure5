@@ -1,0 +1,598 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Measure5 Challenge</title>
+<link rel="icon" type="image/png" href="scale.png"> 
+<link rel="shortcut icon" href="scale.png" type="image/png">
+<link rel="preconnect" href="https://fonts.gstatic.com">
+<link href="https://fonts.googleapis.com/css2?family=Open+Sans:wght@400;600&family=Space+Mono:wght@700&display=swap" rel="stylesheet">
+<style>
+  /*
+    Color Palette:
+    #D9ECF2 (light pastel blue)
+    #F56A79 (pinkish)
+    #FF414D (bright red/pink)
+    #1AA6B7 (teal)
+    #002D40 (dark teal/navy)
+  */
+
+  body {
+    font-family: "Open Sans", sans-serif;
+    background: #D9ECF2; /* light pastel blue */
+    margin: 0; padding: 0; color: #002D40; /* dark teal for text */
+  }
+  header {
+    background: #002D40; /* dark teal/navy */
+    color: #fff;
+    padding: 20px; text-align: center;
+    margin-bottom: 40px;
+  }
+  header h1 {
+    margin: 0; font-size: 2.2em;
+    font-family: "Space Mono", monospace;
+    letter-spacing: 1px;
+  }
+  .container {
+    max-width: 700px; margin: 20px auto;
+    background: #fff; border-radius: 10px;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+    overflow: hidden; padding: 20px;
+    margin-bottom: 40px;
+  }
+  .intro, .game-area, .result-area { display: none; }
+  .active { display: block; }
+  .intro p {
+    font-size: 1.2em; text-align: left;
+    line-height:1.6em;
+    color:#002D40;
+  }
+  .input-group {
+    margin: 20px 0; display: flex;
+    flex-direction: column; align-items: center;
+  }
+  .input-group input, .input-group select {
+    padding: 10px; width: 220px;
+    box-sizing: border-box;
+    margin-bottom: 15px; border: 1px solid #ccc;
+    border-radius: 5px; font-size: 1.1em;
+    font-family: "Open Sans", sans-serif;
+  }
+  .button {
+    background: #F56A79;
+    color: #fff; padding: 12px 24px;
+    border: none; border-radius:5px;
+    cursor: pointer; font-size: 1.1em;
+    margin: 12px 4px; /* slightly narrower margins to fit Hint + Check */
+    display: inline-block;
+    font-family:"Space Mono", monospace;
+    transition: background 0.3s ease;
+    text-align:center;
+  }
+  .button:hover {
+    background: #FF414D;
+    color: #fff;
+  }
+  .timer, .scoreboard {
+    font-size:1.1em;
+    font-family:"Space Mono", monospace;
+    font-weight:bold; text-align:center;
+    margin-bottom:10px; color:#002D40;
+  }
+  .question-count {
+    font-weight: bold; margin-bottom: 15px;
+    font-size: 1.2em; text-align:center;
+    font-family:"Space Mono", monospace;
+  }
+  .question-text {
+    margin-bottom: 12px; /* a bit less margin if using hint below */
+    font-size: 1.3em; text-align:center;
+    font-weight:bold; font-family:"Space Mono", monospace;
+  }
+  .progress-container {
+    width: 100%; background-color: #eee;
+    border-radius: 12px; overflow: hidden;
+    height: 16px; margin: 12px auto;
+  }
+  .progress-bar {
+    height: 100%; width: 0%;
+    background-color: #1AA6B7; /* teal */
+    transition: width 0.4s ease;
+  }
+  .feedback {
+    font-size:1.1em; margin-bottom:20px;
+    padding:10px; border-radius:5px;
+    text-align:center; font-weight:bold;
+    margin-top: 16px;
+  }
+  .feedback.correct {
+    background:#c9f8e5; border:1px solid #77e0b2; color:#002D40;
+    margin: 16px;
+  }
+  .feedback.incorrect {
+    background:#ffe4e7; border:1px solid #ff9aa7; color:#002D40;
+    margin: 16px;
+  }
+  .explanation {
+    font-size:1.1em; margin-bottom:20px;
+    text-align:center; font-style: italic;
+    color:#555;
+  }
+  /* Badge area */
+  .badge-area {
+    text-align:center; font-family:"Space Mono", monospace;
+    margin-bottom: 10px;
+  }
+  .badge {
+    display: inline-block; margin: 5px;
+    padding: 8px 12px; border-radius: 20px;
+    background: #ccc; color: #fff;
+    font-weight: bold; font-size: 0.95em;
+  }
+  .badge.bronze {
+    background: #cd7f32; /* bronze color */
+  }
+  .badge.silver {
+    background: #aaa9ad; /* silver color */
+  }
+  .badge.gold {
+    background: #ffd700; /* gold color */
+    color: #002D40;
+  }
+  footer {
+    text-align:center; color:#444;
+    margin:20px 0; font-size:1em;
+    font-family:"Open Sans", sans-serif;
+  }
+  footer a {
+    color: #444;
+    text-decoration: none;
+  }
+
+  /* Hint table styling: match theme colors, look nice */
+  .hint-table {
+    margin: 0 auto;
+    border-collapse: collapse;
+    min-width: 250px;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+    border-radius: 6px;
+    overflow: hidden;
+    background: #fff;
+    margin-top: 10px;
+  }
+  .hint-table thead th {
+    background: #1AA6B7; /* teal background for header */
+    color: #fff;
+    padding: 8px 14px;
+    text-align: center;
+    font-weight: 700;
+    font-family: "Space Mono", monospace;
+    border-bottom: 2px solid #fff;
+  }
+  .hint-table th[colspan] {
+    border-radius: 6px 6px 0 0;
+  }
+  .hint-table tbody tr {
+    border-bottom: 1px solid #eee;
+  }
+  .hint-table td {
+    padding: 10px 14px;
+    text-align: right;
+    font-weight: 600;
+    font-family: "Space Mono", monospace;
+    color: #002D40;
+  }
+  .hint-table td:first-child {
+    border-right: 1px solid #f0f0f0;
+  }
+  .hint-instructions {
+    font-size: 0.95em; 
+    margin: 6px auto; 
+    color: #555; 
+    text-align: center; 
+    font-family: "Open Sans", sans-serif;
+  }
+</style>
+
+<!-- Firebase SDKs -->
+<script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-database-compat.js"></script>
+</head>
+<body>
+
+<header>
+  <h1>Measure5 Challenge</h1>
+</header>
+
+<div class="container">
+  <!-- Intro Section -->
+  <div class="intro active" id="intro">
+    <h2 style="font-family:'Space Mono', monospace; font-size:1.6em; text-align:center;">Welcome!</h2>
+    <p>
+      In this challenge, add or subtract weights in kilograms and grams, just like in your textbook examples.
+      You have 60 minutes total. Try your best and have fun!
+    </p>
+    <div class="input-group">
+      <input type="text" id="playerName" placeholder="Your Name"/>
+      <select id="division">
+        <option value="" disabled selected>Select Division</option>
+        <option value="A">Division A</option>
+        <option value="B">Division B</option>
+      </select>
+      <input type="number" id="rollNo" placeholder="Enter Roll Number"/>
+    </div>
+    <button class="button" onclick="startGame()">Start</button>
+    <div id="infoMsg" class="info-msg" style="font-size:1.1em; margin-top:10px; color:#FF414D; text-align:center; display:none;"></div>
+  </div>
+
+  <!-- Game Section -->
+  <div class="game-area" id="game-area">
+    <div class="timer" id="timer">Time: 60:00</div>
+    <div class="scoreboard" id="scoreboard">Score: 0</div>
+    <div class="badge-area" id="badgeArea"></div>
+    <div class="progress-container"><div class="progress-bar" id="progressBar"></div></div>
+    <div class="question-count" id="question-count"></div>
+    <div class="question-text" id="question-text"></div>
+
+    <!-- Hint Container (hidden by default) -->
+    <div id="hintContainer" style="display:none;"></div>
+
+    <!-- Show a small note under the hint table if needed -->
+    <div class="hint-instructions" id="hintInstructions" style="display:none;">
+      This table shows the numbers in columns for kg and g.
+    </div>
+
+    <div style="text-align:center;">
+      <input type="text" id="userAnswer"
+             placeholder="Type answer (e.g. '8 kg 560 g')" 
+             style="padding:10px;font-size:1.1em;width:220px;"/>
+    </div>
+
+    <div class="feedback" id="feedback" style="display:none;"></div>
+    <div class="explanation" id="explanation" style="display:none;"></div>
+
+    <!-- Buttons: "Hint" + "Check/Next" -->
+    <div style="text-align:center;">
+      <button class="button" onclick="toggleHint()">Hint</button>
+      <button class="button" id="actionBtn" onclick="actionButtonClicked()">Check</button>
+    </div>
+  </div>
+
+  <!-- Result Section -->
+  <div class="result-area" id="result-area">
+    <h2 style="font-family:'Space Mono', monospace; font-size:1.8em; text-align:center;">Well Done!</h2>
+    <p id="final-message" style="font-size:1.2em; text-align:center;"></p>
+    <p id="final-score" style="font-size:1.2em; text-align:center;"></p>
+    <p style="text-align:center;">Thank you for playing! Keep practicing!</p>
+  </div>
+</div>
+
+<footer>
+  <p>All the best!</p>
+  <a href="https://www.flaticon.com/free-icons/ruler" title="ruler icons">Ruler icons by Freepik - Flaticon</a>
+</footer>
+
+<script>
+// Firebase setup
+const firebaseConfig = {
+  apiKey: "AIzaSyB-RDLOoTlaio0VgtFh7eencMr9ekdFEEk",
+  authDomain: "test-app-1-6ade5.firebaseapp.com",
+  databaseURL: "https://test-app-1-6ade5-default-rtdb.firebaseio.com",
+  projectId: "test-app-1-6ade5",
+  storageBucket: "test-app-1-6ade5.firebasestorage.app",
+  messagingSenderId: "938447574937",
+  appId: "1:938447574937:web:65c1c53a12c665988b2508",
+  measurementId: "G-FKNLFZH4G9"
+};
+firebase.initializeApp(firebaseConfig);
+const database = firebase.database();
+
+// Utility
+function showInfo(msg){
+  const infoEl = document.getElementById("infoMsg");
+  infoEl.textContent = msg;
+  infoEl.style.display = "block";
+}
+function hideInfo(){
+  const infoEl = document.getElementById("infoMsg");
+  infoEl.textContent = "";
+  infoEl.style.display = "none";
+}
+function shuffleArray(array) {
+  for (let i = array.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [array[i], array[j]] = [array[j], array[i]];
+  }
+}
+function randomInt(min, max){return Math.floor(Math.random()*(max-min+1))+min;}
+
+// We'll build 100 random weight questions in "kg g" format
+// Some "X kg Y g + A kg B g"
+// Some "X kg Y g - A kg B g"  (ensuring non-negative result)
+const totalQuestions = 100;
+let questions = [];
+let currentQuestionIndex = 0;
+let score = 0;
+let userKey = "";
+let playerName = "";
+let division = "";
+let rollNo = "";
+// 60 minutes => 3600 seconds
+let totalTime = 60 * 60;
+let timerInterval = null;
+let state = "check"; // "check" or "next"
+
+// Generate the question set
+function generateQuestions() {
+  for (let i=0; i<totalQuestions; i++){
+    let isAddition = Math.random() < 0.5;
+    let kg1 = randomInt(1, 9);
+    let g1 = randomInt(0, 999);
+    let kg2 = randomInt(1, 9);
+    let g2 = randomInt(0, 999);
+
+    let totalA = kg1*1000 + g1;
+    let totalB = kg2*1000 + g2;
+
+    if(isAddition){
+      let totalSum = totalA + totalB;
+      let ansKg = Math.floor(totalSum / 1000);
+      let ansG = totalSum % 1000;
+
+      let questionText = `Add: ${kg1} kg ${g1} g + ${kg2} kg ${g2} g`;
+      let answerText   = `${ansKg} kg ${ansG} g`;
+      let explanation  = `(${kg1} kg ${g1} g) + (${kg2} kg ${g2} g) = ${ansKg} kg ${ansG} g`;
+
+      // Build a table for the hint
+      let hintTable = `
+        <table class="hint-table">
+          <thead>
+            <tr><th colspan="2">Add</th></tr>
+            <tr><th>kg</th><th>g</th></tr>
+          </thead>
+          <tbody>
+            <tr><td>${kg1}</td><td>${g1}</td></tr>
+            <tr><td>+${kg2}</td><td>${g2}</td></tr>
+            <tr><td colspan="2">= ?</td></tr>
+          </tbody>
+        </table>
+      `;
+      questions.push({
+        question: questionText,
+        answer: answerText,
+        explanation: explanation,
+        hintHTML: hintTable
+      });
+    } else {
+      // Subtraction
+      if(totalB > totalA){
+        [kg1, kg2] = [kg2, kg1];
+        [g1,  g2 ] = [g2,  g1];
+        [totalA, totalB] = [totalB, totalA];
+      }
+      let diff = totalA - totalB;
+      let ansKg = Math.floor(diff / 1000);
+      let ansG  = diff % 1000;
+
+      let questionText = `Subtract: ${kg1} kg ${g1} g - ${kg2} kg ${g2} g`;
+      let answerText   = `${ansKg} kg ${ansG} g`;
+      let explanation  = `(${kg1} kg ${g1} g) - (${kg2} kg ${g2} g) = ${ansKg} kg ${ansG} g`;
+
+      let hintTable = `
+        <table class="hint-table">
+          <thead>
+            <tr><th colspan="2">Subtract</th></tr>
+            <tr><th>kg</th><th>g</th></tr>
+          </thead>
+          <tbody>
+            <tr><td>${kg1}</td><td>${g1}</td></tr>
+            <tr><td>-${kg2}</td><td>${g2}</td></tr>
+            <tr><td colspan="2">= ?</td></tr>
+          </tbody>
+        </table>
+      `;
+      questions.push({
+        question: questionText,
+        answer: answerText,
+        explanation: explanation,
+        hintHTML: hintTable
+      });
+    }
+  }
+  shuffleArray(questions);
+}
+
+function startGame(){
+  hideInfo();
+  const nameInput = document.getElementById("playerName").value.trim();
+  const divisionVal = document.getElementById("division").value;
+  const rollNoVal = document.getElementById("rollNo").value.trim();
+  if(!nameInput){
+    showInfo("Please enter your name.");
+    return;
+  }
+  if(!divisionVal){
+    showInfo("Please select your division.");
+    return;
+  }
+  if(!rollNoVal){
+    showInfo("Please enter your roll number.");
+    return;
+  }
+  playerName = nameInput;
+  division = divisionVal;
+  rollNo = rollNoVal;
+  userKey = `${division}_${rollNo}`;
+
+  document.getElementById("intro").classList.remove("active");
+  document.getElementById("game-area").classList.add("active");
+
+  generateQuestions();
+  showQuestion();
+  startTimer();
+
+  // Initialize user data in Firebase (quiz: measure5)
+  const initialData = {
+    name: playerName,
+    division: division,
+    rollNo: rollNo,
+    score: 0,
+    questionsCompleted: 0,
+    quiz: "measure5",
+    timeStarted: new Date().toISOString(),
+    lastAnswered: new Date().toISOString(),
+    totalQuestions: totalQuestions
+  };
+  database.ref(`results/${userKey}`).set(initialData);
+}
+
+function showQuestion(){
+  let q = questions[currentQuestionIndex];
+  document.getElementById("question-count").textContent =
+    "Question " + (currentQuestionIndex+1) + " of " + totalQuestions;
+  document.getElementById("question-text").textContent = q.question;
+
+  // Hide hint content by default
+  document.getElementById("hintContainer").style.display = "none";
+  document.getElementById("hintInstructions").style.display = "none";
+  document.getElementById("hintContainer").innerHTML = q.hintHTML;
+
+  let feedbackEl = document.getElementById("feedback");
+  let explanationEl = document.getElementById("explanation");
+  feedbackEl.style.display = "none";
+  feedbackEl.textContent = "";
+  explanationEl.style.display = "none";
+  explanationEl.textContent = "";
+
+  document.getElementById("userAnswer").value = "";
+  document.getElementById("actionBtn").textContent = "Check";
+  updateProgressBar();
+  state = "check";
+}
+
+// Toggles the hint section on/off
+function toggleHint(){
+  let hintEl = document.getElementById("hintContainer");
+  let instructionsEl = document.getElementById("hintInstructions");
+  if(hintEl.style.display === "none"){
+    hintEl.style.display = "block";
+    instructionsEl.style.display = "block";
+  } else {
+    hintEl.style.display = "none";
+    instructionsEl.style.display = "none";
+  }
+}
+
+function actionButtonClicked(){
+  if(state==="check"){
+    checkAnswer();
+  } else {
+    nextQuestion();
+  }
+}
+
+function checkAnswer(){
+  let userAns = document.getElementById("userAnswer").value.trim().toLowerCase();
+  let q = questions[currentQuestionIndex];
+  let correctAns = q.answer.trim().toLowerCase();
+
+  let feedbackEl = document.getElementById("feedback");
+  let explanationEl = document.getElementById("explanation");
+  feedbackEl.style.display = "block";
+  explanationEl.style.display = "block";
+  feedbackEl.classList.remove("correct","incorrect");
+
+  if(userAns === correctAns){
+    feedbackEl.textContent = "Correct!";
+    feedbackEl.classList.add("correct");
+    explanationEl.textContent = q.explanation;
+    score += 10;
+  } else {
+    feedbackEl.textContent = "Incorrect!";
+    feedbackEl.classList.add("incorrect");
+    explanationEl.textContent = `Correct answer: ${q.answer}. ${q.explanation}`;
+  }
+
+  document.getElementById("scoreboard").textContent = "Score: " + score;
+  checkForBadges();
+  document.getElementById("actionBtn").textContent = "Next";
+  state = "next";
+
+  const timestamp = new Date().toISOString();
+  const questionsCompleted = currentQuestionIndex + 1;
+  database.ref(`results/${userKey}`).update({
+    score: score,
+    questionsCompleted: questionsCompleted,
+    lastAnswered: timestamp
+  });
+}
+
+function nextQuestion(){
+  currentQuestionIndex++;
+  if(currentQuestionIndex >= totalQuestions){
+    endGame();
+  } else {
+    showQuestion();
+  }
+}
+
+function startTimer(){
+  const timerEl = document.getElementById("timer");
+  timerInterval = setInterval(()=>{
+    if(totalTime <= 0){
+      clearInterval(timerInterval);
+      endGame();
+      return;
+    }
+    totalTime--;
+    let minutes = Math.floor(totalTime/60);
+    let seconds = totalTime % 60;
+    if(seconds<10) seconds = "0"+seconds;
+    timerEl.textContent = "Time: " + minutes + ":" + seconds;
+  },1000);
+}
+
+function endGame(){
+  clearInterval(timerInterval);
+  document.getElementById("game-area").classList.remove("active");
+  document.getElementById("result-area").classList.add("active");
+  document.getElementById("final-message").textContent =
+    "Great job, " + playerName + "!";
+  document.getElementById("final-score").textContent =
+    "Your Score: " + score + " out of " + (totalQuestions * 10);
+
+  const timestamp = new Date().toISOString();
+  database.ref(`results/${userKey}`).update({
+    finalScore: score,
+    timeEnded: timestamp,
+    totalTime: 60*60 - totalTime,
+    questionsCompleted: totalQuestions
+  });
+}
+
+// Progress bar: each question is 1% of 100 total
+function updateProgressBar(){
+  const progress = ((currentQuestionIndex+1)/totalQuestions)*100;
+  document.getElementById("progressBar").style.width = progress + "%";
+}
+
+// Simple badge system for certain score milestones
+function checkForBadges(){
+  // Show badges if user reaches certain scores
+  // e.g. Bronze >= 200, Silver >= 500, Gold >= 700
+  const badgeContainer = document.getElementById("badgeArea");
+  badgeContainer.innerHTML = "";
+  if(score >= 200){
+    badgeContainer.innerHTML += `<span class="badge bronze">Bronze</span>`;
+  }
+  if(score >= 500){
+    badgeContainer.innerHTML += `<span class="badge silver">Silver</span>`;
+  }
+  if(score >= 700){
+    badgeContainer.innerHTML += `<span class="badge gold">Gold</span>`;
+  }
+}
+</script>
+</body>
+</html>
